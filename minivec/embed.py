@@ -30,7 +30,12 @@ class Embedder:
     @property
     def dim(self) -> int:
         """Dimensionality of the vectors this model produces."""
-        return int(self._ensure_model().get_sentence_embedding_dimension())
+        model = self._ensure_model()
+        # renamed in newer sentence-transformers; keep both paths working
+        getter = getattr(model, "get_embedding_dimension", None) or getattr(
+            model, "get_sentence_embedding_dimension"
+        )
+        return int(getter())
 
     def embed(self, texts: list[str]) -> np.ndarray:
         """Embed a batch of strings.
