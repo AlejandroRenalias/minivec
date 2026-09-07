@@ -9,6 +9,9 @@ Stage 2.
 from __future__ import annotations
 
 import argparse
+from pathlib import Path
+
+from .db import MiniVec
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -30,9 +33,41 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def _cmd_ingest(args: argparse.Namespace) -> int:
+    db = MiniVec.load(args.db) if Path(args.db).exists() else MiniVec()
+    added = db.ingest(args.path, chunk_size=args.chunk_size, overlap=args.overlap)
+    db.save(args.db)
+    total = len(db.store) if db.store is not None else 0
+    if added == 0:
+        print(f"No text files found under {args.path!r}.")
+    else:
+        print(f"Indexed {added} chunks from {args.path!r} -> {args.db} ({total} total).")
+    return 0
+
+
+def _cmd_query(args: argparse.Namespace) -> int:
+    if not Path(args.db).exists():
+        print(f"No store at {args.db!r}. Run `minivec ingest` first.")
+        return 1
+    db = MiniVec.load(args.db, index=args.index)
+    results = db.query(args.text, k=args.k)
+    if not results:
+        print("No results.")
+        return 0
+    for rank, result in enumerate(results, 1):
+        snippet = " ".join(result.chunk.text.split())[:200]
+        print(f"{rank}. ({result.score:.2f}) {result.chunk.source}")
+        print(f"   {snippet}")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
-    raise NotImplementedError("stage 2")
+    if args.command == "ingest":
+        return _cmd_ingest(args)
+    if args.command == "query":
+        return _cmd_query(args)
+    return 1
 
 
 if __name__ == "__main__":

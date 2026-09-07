@@ -75,7 +75,7 @@ query "..." ──embed──▶ [ ... ] ──────▶ Index.search() �
 
 - [x] **0** — scaffold + design
 - [x] **1** — `chunk` + `embed` (+ tests)
-- [ ] **2** — `store` + `BruteForceIndex` + `db` + CLI (end-to-end `ingest`/`query`)
+- [x] **2** — `store` + `BruteForceIndex` + `db` + CLI (end-to-end `ingest`/`query`)
 - [ ] **3** — `IVFIndex` + `benchmark.py`
 - [ ] **4** — polish: more tests, usage docs
 
@@ -89,6 +89,20 @@ pip install -e ".[dev]"
 
 The first `ingest` downloads the embedding model (`all-MiniLM-L6-v2`, ~90 MB) once,
 then runs fully offline.
+
+## Usage
+
+```bash
+# index a folder of .txt / .md / .rst files into a store directory
+minivec ingest ./my-notes --db ./notes-store
+
+# ask it questions
+minivec query "what did I decide about the auth flow?" --db ./notes-store -k 5
+```
+
+`ingest` is incremental — run it again with more files and the same `--db` to add
+to the existing store. Each result line is `rank. (score) source` followed by a
+snippet, where `score` is cosine similarity in `[-1, 1]` (higher = closer).
 
 ## Glossary
 

@@ -16,6 +16,19 @@ from __future__ import annotations
 import numpy as np
 
 
+def _top_k(scores: np.ndarray, k: int) -> tuple[np.ndarray, np.ndarray]:
+    """Indices and scores of the ``k`` largest entries, highest first."""
+    n = len(scores)
+    if n == 0 or k <= 0:
+        empty_i = np.empty(0, dtype=np.int64)
+        return scores[empty_i], empty_i
+    k = min(k, n)
+    # argpartition gets the k best in O(n); then sort just those k
+    part = np.argpartition(-scores, k - 1)[:k]
+    order = part[np.argsort(-scores[part], kind="stable")]
+    return scores[order], order
+
+
 class BruteForceIndex:
     """Exact nearest-neighbour search by full dot-product scan."""
 
@@ -23,11 +36,19 @@ class BruteForceIndex:
         self._vectors: np.ndarray | None = None
 
     def build(self, vectors: np.ndarray) -> None:
-        raise NotImplementedError("stage 2")
+        self._vectors = np.ascontiguousarray(vectors, dtype=np.float32)
 
     def search(self, query: np.ndarray, k: int) -> tuple[np.ndarray, np.ndarray]:
         """Return ``(scores, ids)`` for the top ``k`` rows, best first."""
-        raise NotImplementedError("stage 2")
+        if self._vectors is None:
+            raise RuntimeError("index has not been built")
+        q = np.asarray(query, dtype=np.float32).reshape(-1)
+        if q.shape[0] != self._vectors.shape[1]:
+            raise ValueError(
+                f"query dim {q.shape[0]} != index dim {self._vectors.shape[1]}"
+            )
+        scores = self._vectors @ q
+        return _top_k(scores, k)
 
 
 class IVFIndex:
