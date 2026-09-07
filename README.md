@@ -74,7 +74,7 @@ query "..." ──embed──▶ [ ... ] ──────▶ Index.search() �
 ## Build stages
 
 - [x] **0** — scaffold + design
-- [ ] **1** — `chunk` + `embed` (+ tests)
+- [x] **1** — `chunk` + `embed` (+ tests)
 - [ ] **2** — `store` + `BruteForceIndex` + `db` + CLI (end-to-end `ingest`/`query`)
 - [ ] **3** — `IVFIndex` + `benchmark.py`
 - [ ] **4** — polish: more tests, usage docs

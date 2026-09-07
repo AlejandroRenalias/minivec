@@ -17,12 +17,20 @@ class Embedder:
 
     def __init__(self, model_name: str = DEFAULT_MODEL) -> None:
         self.model_name = model_name
-        self._model = None  # loaded on first embed()
+        self._model = None  # loaded on first use
+
+    def _ensure_model(self):
+        if self._model is None:
+            # imported lazily so `import minivec` doesn't pull in torch
+            from sentence_transformers import SentenceTransformer
+
+            self._model = SentenceTransformer(self.model_name)
+        return self._model
 
     @property
     def dim(self) -> int:
         """Dimensionality of the vectors this model produces."""
-        raise NotImplementedError("stage 1")
+        return int(self._ensure_model().get_sentence_embedding_dimension())
 
     def embed(self, texts: list[str]) -> np.ndarray:
         """Embed a batch of strings.
@@ -30,4 +38,12 @@ class Embedder:
         Returns:
             float32 array of shape ``(len(texts), dim)``, each row L2-normalized.
         """
-        raise NotImplementedError("stage 1")
+        if not texts:
+            return np.empty((0, self.dim), dtype=np.float32)
+
+        vectors = self._ensure_model().encode(
+            texts,
+            normalize_embeddings=True,
+            convert_to_numpy=True,
+        )
+        return np.ascontiguousarray(vectors, dtype=np.float32)
