@@ -1,0 +1,17 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.venv/
+venv/
+
+# minivec stores (local indexes)
+*.minivec/
+stores/
+data/
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/

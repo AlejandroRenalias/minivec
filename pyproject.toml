@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "minivec"
+version = "0.0.1"
+description = "A from-scratch miniature vector database for learning how RAG retrieval works"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "numpy>=1.26",
+    "sentence-transformers>=3.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0"]
+
+[project.scripts]
+minivec = "minivec.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["minivec*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
