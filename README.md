@@ -76,8 +76,8 @@ query "..." ──embed──▶ [ ... ] ──────▶ Index.search() �
 - [x] **0** — scaffold + design
 - [x] **1** — `chunk` + `embed` (+ tests)
 - [x] **2** — `store` + `BruteForceIndex` + `db` + CLI (end-to-end `ingest`/`query`)
-- [ ] **3** — `IVFIndex` + `benchmark.py`
-- [ ] **4** — polish: more tests, usage docs
+- [x] **3** — `IVFIndex` + `benchmark.py`
+- [ ] **4** — polish: more tests, usage docs (optional)
 
 ## Setup
 
@@ -103,6 +103,27 @@ minivec query "what did I decide about the auth flow?" --db ./notes-store -k 5
 `ingest` is incremental — run it again with more files and the same `--db` to add
 to the existing store. Each result line is `rank. (score) source` followed by a
 snippet, where `score` is cosine similarity in `[-1, 1]` (higher = closer).
+
+## Benchmark: why an index
+
+`python benchmark.py` builds a 200k-vector synthetic set, treats brute force as
+ground truth, and sweeps IVF's `nprobe`:
+
+```
+ nprobe   recall@k   ms/query   speedup
+      1      0.743      0.050     57.8x
+      2      0.938      0.065     44.1x
+      4      0.997      0.095     30.3x
+      8      1.000      0.227     12.7x
+     64      1.000      1.917      1.5x
+    128      1.000      4.555      0.6x
+```
+
+The lesson in one table: probing 4 of 1024 clusters returns 99.7% of the true
+top-10 for ~30x less work. Beyond a point, more probing buys no recall and just
+costs time — at `nprobe=128` IVF is *slower* than brute force, because gathering
+candidate rows in Python outweighs the matmul it saved. Real vector databases
+live at that recall/latency knee; this benchmark lets you see it move.
 
 ## Glossary
 

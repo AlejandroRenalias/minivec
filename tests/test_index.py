@@ -55,18 +55,56 @@ def test_search_before_build_raises():
         BruteForceIndex().search(np.zeros(4, dtype=np.float32), k=1)
 
 
-@pytest.mark.skip(reason="stage 3")
-def test_ivf_recall_is_high_against_brute_force():
+def _recall(brute: BruteForceIndex, ivf: IVFIndex, queries: np.ndarray, k: int) -> float:
+    hits = total = 0
+    for q in queries:
+        _, truth = brute.search(q, k=k)
+        _, approx = ivf.search(q, k=k)
+        hits += len(set(truth.tolist()) & set(approx.tolist()))
+        total += k
+    return hits / total
+
+
+def test_ivf_recall_is_high_with_enough_probes():
     vectors = _random_normalized(5000, 32)
     brute = BruteForceIndex()
     brute.build(vectors)
     ivf = IVFIndex(nlist=64, nprobe=16)
     ivf.build(vectors)
 
-    hits = total = 0
-    for q in vectors[:100]:
-        _, truth = brute.search(q, k=10)
-        _, approx = ivf.search(q, k=10)
-        hits += len(set(truth.tolist()) & set(approx.tolist()))
-        total += 10
-    assert hits / total > 0.8
+    assert _recall(brute, ivf, vectors[:100], k=10) > 0.8
+
+
+def test_ivf_recall_rises_with_nprobe():
+    vectors = _random_normalized(4000, 24)
+    brute = BruteForceIndex()
+    brute.build(vectors)
+    queries = vectors[:80]
+
+    recalls = []
+    for nprobe in (1, 4, 16):
+        ivf = IVFIndex(nlist=50, nprobe=nprobe)
+        ivf.build(vectors)
+        recalls.append(_recall(brute, ivf, queries, k=10))
+
+    assert recalls[0] < recalls[-1]
+    assert recalls == sorted(recalls)
+
+
+def test_ivf_probing_every_cluster_matches_brute_force():
+    vectors = _random_normalized(600, 16)
+    brute = BruteForceIndex()
+    brute.build(vectors)
+    ivf = IVFIndex(nlist=10, nprobe=10)  # nprobe == nlist -> exhaustive
+    ivf.build(vectors)
+
+    assert _recall(brute, ivf, vectors[:50], k=10) == 1.0
+
+
+def test_ivf_handles_more_clusters_than_points():
+    vectors = _random_normalized(5, 8)
+    ivf = IVFIndex(nlist=64, nprobe=8)
+    ivf.build(vectors)
+    scores, ids = ivf.search(vectors[2], k=3)
+    assert ids[0] == 2
+    assert len(ids) == 3
