@@ -48,7 +48,8 @@ query "..." ──embed──▶ [ ... ] ──────▶ Index.search() �
 | `minivec/store.py` | Hold the vector matrix + parallel metadata; save/load a Store directory |
 | `minivec/index.py` | Search strategies: `BruteForceIndex`, `IVFIndex` (same interface) |
 | `minivec/db.py` | `MiniVec` — ties it together: `ingest(path)`, `query(text, k)` |
-| `minivec/cli.py` | `minivec ingest` / `minivec query` |
+| `minivec/generate.py` | `answer()` — the "G" in RAG: Claude writes a grounded reply from retrieved chunks (the only online, paid part) |
+| `minivec/cli.py` | `minivec ingest` / `query` / `ask` |
 | `benchmark.py` | IVF vs. brute force: recall@k and query latency |
 
 ### Key design choices
@@ -77,7 +78,8 @@ query "..." ──embed──▶ [ ... ] ──────▶ Index.search() �
 - [x] **1** — `chunk` + `embed` (+ tests)
 - [x] **2** — `store` + `BruteForceIndex` + `db` + CLI (end-to-end `ingest`/`query`)
 - [x] **3** — `IVFIndex` + `benchmark.py`
-- [ ] **4** — polish: more tests, usage docs (optional)
+- [x] **4** — `ask`: LLM generation over retrieved chunks (full RAG loop)
+- [ ] **5** — polish: sample corpus in the repo, richer output (optional)
 
 ## Setup
 
@@ -103,6 +105,30 @@ minivec query "what did I decide about the auth flow?" --db ./notes-store -k 5
 `ingest` is incremental — run it again with more files and the same `--db` to add
 to the existing store. Each result line is `rank. (score) source` followed by a
 snippet, where `score` is cosine similarity in `[-1, 1]` (higher = closer).
+
+### Grounded answers (the full RAG loop)
+
+`query` returns raw chunks. `ask` goes one step further: it retrieves, then sends
+those chunks to Claude to write an answer grounded **only** in them.
+
+```bash
+cp .env.example .env      # then put your ANTHROPIC_API_KEY in it
+minivec ask "what did I decide about the auth flow?" --db ./notes-store
+```
+
+```
+We agreed to drop password login and move to OAuth-only in the March redesign,
+with short-lived tokens refreshed hourly. (2026-03-meeting.md, auth-design.md)
+
+Sources: notes/2026-03-meeting.md, notes/auth-design.md
+```
+
+- Retrieval stays offline and free; only `ask` calls the API (Claude Sonnet by
+  default, a fraction of a cent per question).
+- If no retrieved chunk clears `--min-score` (default 0.15), `ask` answers "I
+  couldn't find anything relevant" **without** calling the API — cheaper, and it
+  won't answer from noise.
+- `--show-context` prints the chunks that were sent to the model.
 
 ## Benchmark: why an index
 

@@ -9,7 +9,11 @@ venv/
 # minivec stores (local indexes)
 *.minivec/
 stores/
+store/
 data/
+
+# secrets
+.env
 
 # OS / editor
 .DS_Store
