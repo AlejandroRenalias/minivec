@@ -8,8 +8,10 @@ venv/
 
 # minivec stores (local indexes)
 *.minivec/
+*-store/
 stores/
 store/
+notes-store/
 data/
 
 # secrets
