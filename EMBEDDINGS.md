@@ -1,4 +1,4 @@
-# Embeddings — what I learned
+# Embeddings - what I learned
 
 The one idea minivec is built on, in plain terms. Written after working through
 `explore.py` by predicting scores and checking them.
@@ -14,7 +14,7 @@ The one idea minivec is built on, in plain terms. Written after working through
    other because they *mean* similar things.
 
 3. **Searching is just geometry.** minivec turns the question into a point and
-   finds the stored points nearest to it. That's the entire mechanical job —
+   finds the stored points nearest to it. That's the entire mechanical job -
    no language understanding happens inside minivec itself.
 
 4. **A model makes the numbers, and it's a black box.** `embed.py` runs a small
@@ -23,7 +23,7 @@ The one idea minivec is built on, in plain terms. Written after working through
    coordinates. I don't need to know how the training works to use it.
 
 5. **It captures topic well, opposites badly.** "I love this movie" and "I hate
-   this movie" scored **0.71** — high — even though the meaning is reversed,
+   this movie" scored **0.71** - high - even though the meaning is reversed,
    because both are *about having a strong opinion on a movie*. Negation and
    sentiment barely move the point.
 
