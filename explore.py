@@ -44,7 +44,7 @@ def show(a: str, b: str) -> None:
 
 PAIRS = [
     # (sentence A, sentence B)
-    ("a dog barked loudly", "the puppy made a lot of noise"),
+    ("a dog barked loudly", "a cat sat quietly on the mat"),
     ("a dog barked loudly", "I paid my electricity bill"),
     ("how do I reset my password?", "I forgot my login credentials"),
     ("how do I reset my password?", "what time does the shop close?"),
