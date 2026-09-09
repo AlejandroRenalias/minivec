@@ -18,6 +18,17 @@ from .store import Store
 
 TEXT_SUFFIXES = {".txt", ".md", ".markdown", ".rst"}
 
+# Directories `ingest` should never descend into. Any directory whose name
+# starts with "." (e.g. .venv, .git) is skipped too — see _iter_text_files.
+SKIP_DIRS = {
+    "venv",
+    "node_modules",
+    "__pycache__",
+    "site-packages",
+    "dist",
+    "build",
+}
+
 
 @dataclass
 class SearchResult:
@@ -46,8 +57,12 @@ class MiniVec:
             yield path
             return
         for p in sorted(path.rglob("*")):
-            if p.is_file() and p.suffix.lower() in TEXT_SUFFIXES:
-                yield p
+            if not p.is_file() or p.suffix.lower() not in TEXT_SUFFIXES:
+                continue
+            parent_parts = p.relative_to(path).parts[:-1]
+            if any(d in SKIP_DIRS or d.startswith(".") for d in parent_parts):
+                continue
+            yield p
 
     def ingest(
         self,

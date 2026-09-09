@@ -59,3 +59,16 @@ def test_save_load_roundtrip_preserves_search(tmp_path, corpus):
 def test_query_without_ingest_raises():
     with pytest.raises(RuntimeError):
         MiniVec().query("anything", k=1)
+
+
+def test_ingest_skips_venv_git_and_hidden_dirs(tmp_path):
+    (tmp_path / "notes.md").write_text("real content")
+    (tmp_path / "sub").mkdir()
+    (tmp_path / "sub" / "more.txt").write_text("also real")
+    for junk in (".venv/lib/site-packages", ".git", "node_modules", "__pycache__"):
+        d = tmp_path / junk
+        d.mkdir(parents=True)
+        (d / "junk.txt").write_text("should be ignored")
+
+    found = {p.name for p in MiniVec()._iter_text_files(tmp_path)}
+    assert found == {"notes.md", "more.txt"}
