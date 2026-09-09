@@ -65,7 +65,13 @@ def test_ingest_skips_venv_git_and_hidden_dirs(tmp_path):
     (tmp_path / "notes.md").write_text("real content")
     (tmp_path / "sub").mkdir()
     (tmp_path / "sub" / "more.txt").write_text("also real")
-    for junk in (".venv/lib/site-packages", ".git", "node_modules", "__pycache__"):
+    for junk in (
+        ".venv/lib/site-packages",
+        ".git",
+        "node_modules",
+        "__pycache__",
+        "minivec.egg-info",
+    ):
         d = tmp_path / junk
         d.mkdir(parents=True)
         (d / "junk.txt").write_text("should be ignored")

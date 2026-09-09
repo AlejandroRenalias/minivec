@@ -60,7 +60,10 @@ class MiniVec:
             if not p.is_file() or p.suffix.lower() not in TEXT_SUFFIXES:
                 continue
             parent_parts = p.relative_to(path).parts[:-1]
-            if any(d in SKIP_DIRS or d.startswith(".") for d in parent_parts):
+            if any(
+                d in SKIP_DIRS or d.startswith(".") or d.endswith(".egg-info")
+                for d in parent_parts
+            ):
                 continue
             yield p
 
